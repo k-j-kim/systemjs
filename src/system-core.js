@@ -29,14 +29,14 @@ const systemJSPrototype = SystemJS.prototype;
 
 systemJSPrototype.prepareImport = function () {};
 
-systemJSPrototype.import = function (id, parentUrl) {
+systemJSPrototype.import = function (id, parentUrl, config) {
   const loader = this;
   return Promise.resolve(loader.prepareImport())
   .then(function() {
     return loader.resolve(id, parentUrl);
   })
   .then(function (id) {
-    const load = getOrCreateLoad(loader, id);
+    const load = getOrCreateLoad(loader, id, null, config);
     return load.C || topLevelLoad(loader, load);
   });
 };
@@ -74,7 +74,7 @@ systemJSPrototype.getRegister = function () {
   return _lastRegister;
 };
 
-function getOrCreateLoad (loader, id, firstParentUrl) {
+function getOrCreateLoad (loader, id, firstParentUrl, config) {
   let load = loader[REGISTRY][id];
   if (load)
     return load;
@@ -86,7 +86,7 @@ function getOrCreateLoad (loader, id, firstParentUrl) {
   
   let instantiatePromise = Promise.resolve()
   .then(function () {
-    return loader.instantiate(id, firstParentUrl);
+    return loader.instantiate(id, firstParentUrl, config);
   })
   .then(function (registration) {
     if (!registration)
@@ -140,7 +140,7 @@ function getOrCreateLoad (loader, id, firstParentUrl) {
       const setter = instantiation[1][i];
       return Promise.resolve(loader.resolve(dep, id))
       .then(function (depId) {
-        const depLoad = getOrCreateLoad(loader, depId, id);
+        const depLoad = getOrCreateLoad(loader, depId, id, config);
         // depLoad.I may be undefined for already-evaluated
         return Promise.resolve(depLoad.I)
         .then(function () {

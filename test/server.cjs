@@ -67,6 +67,14 @@ http.createServer(async function (req, res) {
     return;
   }
 
+  if (url.href.includes('/cross-origin/') && !(req.headers.cookie && req.headers.cookie.includes('test=value'))) {
+    res.writeHead(403, {
+      'content-type': 'text/html'
+    });
+    res.end(`Forbidden`);
+    return;
+  }
+
   const fileStream = fs.createReadStream(filePath);
   try {
     await once(fileStream, 'readable');

@@ -81,6 +81,24 @@ suite('SystemJS Standard Tests', function() {
     });
   });
 
+  test('script loading cross-origin anonymous fails (in Safari)', function () {
+    return System.import('fixtures/cross-origin/anonymous.js')
+    .then(function (m) {
+      assert.fail('Should fail');
+    })
+    .catch(function (err) {
+      assert.ok(err);
+    });
+  });
+
+  test('script loading cross-origin use-credentials passes (in Safari)', function () {
+    return System.import('fixtures/cross-origin/use-credentials.js', null, {
+      crossOrigin: 'use-credentials'
+    }).then(function (m) {
+      assert.ok(m.default);
+    });
+  });
+
   test('Parallel Global loading', function () {
     var scriptsToLoad = [];
     for (var i = 1; i < 11; i++)

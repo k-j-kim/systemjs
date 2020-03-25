@@ -219,14 +219,14 @@
 
   systemJSPrototype.prepareImport = function () {};
 
-  systemJSPrototype.import = function (id, parentUrl) {
+  systemJSPrototype.import = function (id, parentUrl, config) {
     const loader = this;
     return Promise.resolve(loader.prepareImport())
     .then(function() {
       return loader.resolve(id, parentUrl);
     })
     .then(function (id) {
-      const load = getOrCreateLoad(loader, id);
+      const load = getOrCreateLoad(loader, id, null, config);
       return load.C || topLevelLoad(loader, load);
     });
   };
@@ -263,7 +263,7 @@
     return _lastRegister;
   };
 
-  function getOrCreateLoad (loader, id, firstParentUrl) {
+  function getOrCreateLoad (loader, id, firstParentUrl, config) {
     let load = loader[REGISTRY][id];
     if (load)
       return load;
@@ -275,7 +275,7 @@
     
     let instantiatePromise = Promise.resolve()
     .then(function () {
-      return loader.instantiate(id, firstParentUrl);
+      return loader.instantiate(id, firstParentUrl, config);
     })
     .then(function (registration) {
       if (!registration)
@@ -328,7 +328,7 @@
         const setter = instantiation[1][i];
         return Promise.resolve(loader.resolve(dep, id))
         .then(function (depId) {
-          const depLoad = getOrCreateLoad(loader, depId, id);
+          const depLoad = getOrCreateLoad(loader, depId, id, config);
           // depLoad.I may be undefined for already-evaluated
           return Promise.resolve(depLoad.I)
           .then(function () {
@@ -542,11 +542,11 @@
     systemRegister.call(this, deps, declare);
   };
 
-  systemJSPrototype.createScript = function (url) {
+  systemJSPrototype.createScript = function (url, crossOrigin) {
     const script = document.createElement('script');
     script.charset = 'utf-8';
     script.async = true;
-    script.crossOrigin = 'anonymous';
+    script.crossOrigin = crossOrigin;
     script.src = url;
     return script;
   };
@@ -558,10 +558,10 @@
       lastWindowError = evt.error;
     });
 
-  systemJSPrototype.instantiate = function (url, firstParentUrl) {
+  systemJSPrototype.instantiate = function (url, firstParentUrl, config) {
     const loader = this;
     return new Promise(function (resolve, reject) {
-      const script = systemJSPrototype.createScript(url);
+      const script = systemJSPrototype.createScript(url, getCrossOrigin(config));
       script.addEventListener('error', function () {
         reject(Error('Error loading ' + url + (firstParentUrl ? ' from ' + firstParentUrl : '')));
       });
@@ -583,6 +583,10 @@
   if (hasDocument) {
     window.addEventListener('DOMContentLoaded', loadScriptModules);
     loadScriptModules();
+  }
+
+  function getCrossOrigin(config) {
+    return (config && config.crossOrigin && typeof config.crossOrigin === 'string' && config.crossOrigin.toLowerCase() === 'use-credentials') ? 'use-credentials' : 'anonymous';
   }
 
   function loadScriptModules() {
@@ -665,9 +669,9 @@
     }
 
     const impt = systemJSPrototype.import;
-    systemJSPrototype.import = function (id, parentUrl) {
+    systemJSPrototype.import = function (id, parentUrl, config) {
       noteGlobalProps();
-      return impt.call(this, id, parentUrl);
+      return impt.call(this, id, parentUrl, config);
     };
 
     const emptyInstantiation = [[], function () { return {} }];
@@ -722,13 +726,13 @@
       return fetch(url);
     };
 
-    systemJSPrototype.instantiate = function (url, parent) {
+    systemJSPrototype.instantiate = function (url, firstParentUrl, config) {
       const loader = this;
       if (this.shouldFetch(url)) {
         return this.fetch(url)
         .then(function (res) {
           if (!res.ok)
-            throw Error(res.status + ' ' + res.statusText + ', loading ' + url + (parent ? ' from ' + parent : ''));
+            throw Error(res.status + ' ' + res.statusText + ', loading ' + url + (firstParentUrl ? ' from ' + firstParentUrl : ''));
           const contentType = res.headers.get('content-type');
           if (contentType.match(/^(text|application)\/(x-)?javascript(;|$)/)) {
             return res.text().then(function (source) {
@@ -798,7 +802,7 @@
           }
         });
       }
-      return instantiate.apply(this, arguments);
+      return instantiate.call(this, url, firstParentUrl, config);
     };
   })(typeof self !== 'undefined' ? self : global);
 

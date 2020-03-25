@@ -25,6 +25,8 @@
 	<script type="systemjs-module" src="import:/test/fixtures/browser/systemjs-module-script2.js"></script>
 
 	<script>
+		document.cookie = 'test=value';
+
 		mocha.setup('tdd');
 
 		self.baseURL = location.href.substr(0, location.href.lastIndexOf('/') + 1);

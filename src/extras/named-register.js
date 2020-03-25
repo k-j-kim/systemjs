@@ -52,13 +52,13 @@
   };
 
   const instantiate = systemJSPrototype.instantiate;
-  systemJSPrototype.instantiate = function (url, firstParentUrl) {
+  systemJSPrototype.instantiate = function (url, firstParentUrl, config) {
     const result = this.registerRegistry[url];
     if (result) {
       this.registerRegistry[url] = null;
       return result;
     } else {
-      return instantiate.call(this, url, firstParentUrl);
+      return instantiate.call(this, url, firstParentUrl, config);
     }
   };
 

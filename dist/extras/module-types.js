@@ -16,13 +16,13 @@
     return fetch(url);
   };
 
-  systemJSPrototype.instantiate = function (url, parent) {
+  systemJSPrototype.instantiate = function (url, firstParentUrl, config) {
     const loader = this;
     if (this.shouldFetch(url)) {
       return this.fetch(url)
       .then(function (res) {
         if (!res.ok)
-          throw Error(res.status + ' ' + res.statusText + ', loading ' + url + (parent ? ' from ' + parent : ''));
+          throw Error(res.status + ' ' + res.statusText + ', loading ' + url + (firstParentUrl ? ' from ' + firstParentUrl : ''));
         const contentType = res.headers.get('content-type');
         if (contentType.match(/^(text|application)\/(x-)?javascript(;|$)/)) {
           return res.text().then(function (source) {
@@ -92,6 +92,6 @@
         }
       });
     }
-    return instantiate.apply(this, arguments);
+    return instantiate.call(this, url, firstParentUrl, config);
   };
 })(typeof self !== 'undefined' ? self : global);

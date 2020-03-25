@@ -5,15 +5,15 @@
   const systemJSPrototype = global.System.constructor.prototype;
 
   const instantiate = systemJSPrototype.instantiate;
-  systemJSPrototype.instantiate = function (url, parent) {
+  systemJSPrototype.instantiate = function (url, parentUrl, config) {
     if (url.slice(-5) === '.wasm')
-      return instantiate.call(this, url, parent);
+      return instantiate.call(this, url, parentUrl, config);
 
     const loader = this;
     return fetch(url, { credentials: 'same-origin' })
     .then(function (res) {
       if (!res.ok)
-        throw Error('Fetch error: ' + res.status + ' ' + res.statusText + (parent ? ' loading from ' + parent : ''));
+        throw Error('Fetch error: ' + res.status + ' ' + res.statusText + (parentUrl ? ' loading from ' + parentUrl : ''));
       return res.text();
     })
     .then(function (source) {

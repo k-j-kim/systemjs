@@ -10,11 +10,11 @@ systemJSPrototype.register = function (deps, declare) {
   systemRegister.call(this, deps, declare);
 };
 
-systemJSPrototype.createScript = function (url) {
+systemJSPrototype.createScript = function (url, crossOrigin) {
   const script = document.createElement('script');
   script.charset = 'utf-8';
   script.async = true;
-  script.crossOrigin = 'anonymous';
+  script.crossOrigin = crossOrigin;
   script.src = url;
   return script;
 };
@@ -26,10 +26,10 @@ if (hasDocument)
     lastWindowError = evt.error;
   });
 
-systemJSPrototype.instantiate = function (url, firstParentUrl) {
+systemJSPrototype.instantiate = function (url, firstParentUrl, config) {
   const loader = this;
   return new Promise(function (resolve, reject) {
-    const script = systemJSPrototype.createScript(url);
+    const script = systemJSPrototype.createScript(url, getCrossOrigin(config));
     script.addEventListener('error', function () {
       reject(Error('Error loading ' + url + (firstParentUrl ? ' from ' + firstParentUrl : '')));
     });
@@ -51,6 +51,10 @@ systemJSPrototype.instantiate = function (url, firstParentUrl) {
 if (hasDocument) {
   window.addEventListener('DOMContentLoaded', loadScriptModules);
   loadScriptModules();
+}
+
+function getCrossOrigin(config) {
+  return (config && config.crossOrigin && typeof config.crossOrigin === 'string' && config.crossOrigin.toLowerCase() === 'use-credentials') ? 'use-credentials' : 'anonymous';
 }
 
 function loadScriptModules() {

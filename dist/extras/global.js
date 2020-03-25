@@ -51,9 +51,9 @@
   }
 
   const impt = systemJSPrototype.import;
-  systemJSPrototype.import = function (id, parentUrl) {
+  systemJSPrototype.import = function (id, parentUrl, config) {
     noteGlobalProps();
-    return impt.call(this, id, parentUrl);
+    return impt.call(this, id, parentUrl, config);
   };
 
   const emptyInstantiation = [[], function () { return {} }];
